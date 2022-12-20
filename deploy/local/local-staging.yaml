@@ -1,0 +1,15 @@
+db:
+  user: auth
+  password: auth
+  host: 0.0.0.0:3306
+  dbName: auth
+  driver: mysql
+  disableTLS: true
+  timeout: 1s
+  readTimeout: 2s
+  writeTimeout: 2s
+  maxIdleConns: 10
+  maxOpenConns: 50
+  connMaxIdleTime: 3s
+  connMaxLifetime: 30m
+secretKey:

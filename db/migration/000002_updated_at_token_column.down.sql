@@ -1,0 +1,1 @@
+ALTER TABLE `token` DROP COLUMN `updated_at`;
