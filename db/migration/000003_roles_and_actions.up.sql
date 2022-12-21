@@ -1,7 +1,7 @@
 CREATE TABLE `role` (
   `id` bigint PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
-  `enabled` bit NULL,
+  `enabled` bit NOT NULL DEFAULT 1,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime
 );
@@ -10,7 +10,7 @@ CREATE TABLE `action` (
     `id` bigint PRIMARY KEY AUTO_INCREMENT,
 	`action` varchar(64) NOT NULL,
     `entity` varchar(64) NOT NULL,
-    `enabled` bit NULL,
+    `enabled` bit NOT NULL DEFAULT 1,
 	`created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` datetime
 );

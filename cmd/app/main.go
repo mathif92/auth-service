@@ -35,6 +35,12 @@ func main() {
 	authService := services.NewAuthentication(db, tokenService)
 	authHandler := handlers.NewAuthenticationHandler(authService)
 
+	rolesService := services.NewRoles(db)
+	rolesHandlers := handlers.NewRoles(rolesService)
+
+	actionsService := services.NewActions(db)
+	actionsHandlers := handlers.NewActions(actionsService)
+
 	router := chi.NewRouter()
 
 	// All the middlewares used in the app
@@ -44,8 +50,22 @@ func main() {
 	router.Use(middleware.Recoverer)
 
 	router.Get("/ping", health.Ping)
+
+	// Auth handlers
 	router.Post("/credentials", authHandler.CreateCredentials)
 	router.Post("/auth", authHandler.ValidateCredentials)
+
+	// Roles handlers
+	router.Post("/roles", rolesHandlers.CreateRole)
+	router.Patch("/roles", rolesHandlers.UpdateRole)
+	router.Delete("/roles/{id}", rolesHandlers.DeleteRole)
+	router.Post("/roles/{id}/actions", rolesHandlers.AddActionToRole)
+	router.Post("/credentials/{id}/roles", rolesHandlers.AssignRole)
+	router.Delete("/credentials/{id}/roles", rolesHandlers.UnassignRole)
+
+	// Actions handlers
+	router.Post("/actions", actionsHandlers.CreateAction)
+	router.Patch("/actions", actionsHandlers.UpdateAction)
 
 	http.ListenAndServe(":8080", router)
 }

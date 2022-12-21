@@ -12,3 +12,6 @@ cover/
 
 # Dependency directories
 vendor/
+
+# Environments
+.env
