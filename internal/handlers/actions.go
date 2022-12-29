@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/go-chi/render"
 	"github.com/mathif92/auth-service/internal/api"
 	"github.com/mathif92/auth-service/internal/services"
 )
@@ -18,7 +19,7 @@ func NewActions(actionsService *services.Actions) *Actions {
 func (a *Actions) CreateAction(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var action CreateActionInput
-	if err := action.Bind(r); err != nil {
+	if err := render.Bind(r, &action); err != nil {
 		api.RespondError(ctx, w, err)
 		return
 	}
@@ -38,7 +39,7 @@ func (a *Actions) CreateAction(w http.ResponseWriter, r *http.Request) {
 func (a *Actions) UpdateAction(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var action UpdateActionInput
-	if err := action.Bind(r); err != nil {
+	if err := render.Bind(r, &action); err != nil {
 		api.RespondError(ctx, w, err)
 		return
 	}

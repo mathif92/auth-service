@@ -49,23 +49,49 @@ func main() {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 
-	router.Get("/ping", health.Ping)
+	router.Get("/health", health.Health)
 
-	// Auth handlers
-	router.Post("/credentials", authHandler.CreateCredentials)
+	// Auth router
 	router.Post("/auth", authHandler.ValidateCredentials)
 
-	// Roles handlers
-	router.Post("/roles", rolesHandlers.CreateRole)
-	router.Patch("/roles", rolesHandlers.UpdateRole)
-	router.Delete("/roles/{id}", rolesHandlers.DeleteRole)
-	router.Post("/roles/{id}/actions", rolesHandlers.AddActionToRole)
-	router.Post("/credentials/{id}/roles", rolesHandlers.AssignRole)
-	router.Delete("/credentials/{id}/roles", rolesHandlers.UnassignRole)
+	// Roles router
+	router.Route("/roles", func(r chi.Router) {
+		r.Use(tokenService.VerifyToken)
 
-	// Actions handlers
-	router.Post("/actions", actionsHandlers.CreateAction)
-	router.Patch("/actions", actionsHandlers.UpdateAction)
+		r.Post("/", rolesHandlers.CreateRole)
+
+		// Subrouter
+		r.Route("/{roleID}", func(r chi.Router) {
+			r.Patch("/", rolesHandlers.UpdateRole)
+			r.Delete("/", rolesHandlers.DeleteRole)
+			r.Post("/actions", rolesHandlers.AddActionToRole)
+		})
+	})
+
+	// Credentials router
+	router.Route("/credentials", func(r chi.Router) {
+		r.Post("/", authHandler.CreateCredentials)
+
+		// Subrouter
+		r.Route("/{credentialsID}", func(r chi.Router) {
+			r.Use(tokenService.VerifyToken)
+
+			r.Post("/roles", rolesHandlers.AssignRole)
+			r.Delete("/roles", rolesHandlers.UnassignRole)
+		})
+	})
+
+	// Actions router
+	router.Route("/actions", func(r chi.Router) {
+		r.Use(tokenService.VerifyToken)
+
+		r.Post("/", actionsHandlers.CreateAction)
+
+		// Subrouter
+		r.Route("/{actionID}", func(r chi.Router) {
+			r.Patch("/", actionsHandlers.UpdateAction)
+		})
+	})
 
 	http.ListenAndServe(":8080", router)
 }

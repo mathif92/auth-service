@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/go-chi/render"
 	"github.com/mathif92/auth-service/internal/api"
 	"github.com/mathif92/auth-service/internal/services"
 )
@@ -18,7 +19,7 @@ func NewRoles(rolesService *services.Roles) *Roles {
 func (r *Roles) CreateRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var role CreateRoleInput
-	if err := role.Bind(req); err != nil {
+	if err := render.Bind(req, &role); err != nil {
 		api.RespondError(ctx, w, err)
 		return
 	}
@@ -35,7 +36,7 @@ func (r *Roles) CreateRole(w http.ResponseWriter, req *http.Request) {
 func (r *Roles) UpdateRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var role UpdateRoleInput
-	if err := role.Bind(req); err != nil {
+	if err := render.Bind(req, &role); err != nil {
 		api.RespondError(ctx, w, err)
 		return
 	}
@@ -58,7 +59,7 @@ func (r *Roles) DeleteRole(w http.ResponseWriter, req *http.Request) {
 func (r *Roles) AddActionToRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var roleAction RoleActionInput
-	if err := roleAction.Bind(req); err != nil {
+	if err := render.Bind(req, &roleAction); err != nil {
 		api.RespondError(ctx, w, err)
 		return
 	}
@@ -77,7 +78,7 @@ func (r *Roles) AddActionToRole(w http.ResponseWriter, req *http.Request) {
 func (r *Roles) RemoveActionFromRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var roleAction RoleActionInput
-	if err := roleAction.Bind(req); err != nil {
+	if err := render.Bind(req, &roleAction); err != nil {
 		api.RespondError(ctx, w, err)
 		return
 	}
@@ -96,7 +97,7 @@ func (r *Roles) RemoveActionFromRole(w http.ResponseWriter, req *http.Request) {
 func (r *Roles) AssignRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var roleCreds RoleCredentialsInput
-	if err := roleCreds.Bind(req); err != nil {
+	if err := render.Bind(req, &roleCreds); err != nil {
 		api.RespondError(ctx, w, err)
 		return
 	}
@@ -115,7 +116,7 @@ func (r *Roles) AssignRole(w http.ResponseWriter, req *http.Request) {
 func (r *Roles) UnassignRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var roleCreds RoleCredentialsInput
-	if err := roleCreds.Bind(req); err != nil {
+	if err := render.Bind(req, &roleCreds); err != nil {
 		api.RespondError(ctx, w, err)
 		return
 	}

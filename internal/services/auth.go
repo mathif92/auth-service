@@ -73,7 +73,7 @@ func (a *Authentication) Authenticate(ctx context.Context, credentials Credentia
 		return "", errors.Wrap(err, "creating db transaction")
 	}
 
-	token, err := a.tokenService.GenerateToken()
+	token, err := a.tokenService.GenerateToken(credentials.Username, credentials.Email)
 	if err != nil {
 		return "", errors.Wrap(err, "generating token")
 	}

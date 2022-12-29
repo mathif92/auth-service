@@ -23,7 +23,7 @@ func (r *Roles) SaveRole(ctx context.Context, role RoleModel) (int64, error) {
 		return 0, errors.Wrap(err, "creating db transacion")
 	}
 	const (
-		_insertRole = `INSERT INTO roles (name, updated_at) 
+		_insertRole = `INSERT INTO role (name, updated_at) 
 								VALUES (?, current_timestamp())`
 	)
 
