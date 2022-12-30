@@ -62,6 +62,9 @@ func main() {
 
 		// Subrouter
 		r.Route("/{roleID}", func(r chi.Router) {
+			r.Use(rolesHandlers.RoleContext)
+
+			r.Get("/", rolesHandlers.GetRole)
 			r.Patch("/", rolesHandlers.UpdateRole)
 			r.Delete("/", rolesHandlers.DeleteRole)
 			r.Post("/actions", rolesHandlers.AddActionToRole)

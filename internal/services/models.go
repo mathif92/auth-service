@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -26,6 +27,26 @@ type RoleModel struct {
 	Enabled   bool      `db:"enabled"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
+}
+
+type RoleWithActions struct {
+	Role    RoleModel
+	Actions []ActionModel
+}
+
+// Type used for mapping the _selectRoleWithActions query directly into a struct
+type roleWithActions struct {
+	RoleID          int64          `db:"roleID"`
+	RoleName        string         `db:"roleName"`
+	RoleEnabled     bool           `db:"roleEnabled"`
+	RoleCreatedAt   time.Time      `db:"roleCreatedAt"`
+	RoleUpdatedAt   time.Time      `db:"roleUpdatedAt"`
+	ActionID        sql.NullInt64  `db:"actionID"`
+	ActionAction    sql.NullString `db:"actionAction"`
+	ActionEntity    sql.NullString `db:"actionEntity"`
+	ActionEnabled   sql.NullBool   `db:"actionEnabled"`
+	ActionCreatedAt sql.NullTime   `db:"actionCreatedAt"`
+	ActionUpdatedAt sql.NullTime   `db:"actionUpdatedAt"`
 }
 
 type ActionModel struct {

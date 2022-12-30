@@ -1,12 +1,18 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/mathif92/auth-service/internal/api"
+	"github.com/mathif92/auth-service/internal/errors"
 	"github.com/mathif92/auth-service/internal/services"
 )
+
+type roleCtxKey string
 
 type Roles struct {
 	rolesService *services.Roles
@@ -31,6 +37,17 @@ func (r *Roles) CreateRole(w http.ResponseWriter, req *http.Request) {
 	}
 
 	api.Respond(ctx, w, ResourceCreatedResponse{ID: roleID}, http.StatusCreated)
+}
+
+func (r *Roles) GetRole(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	role, ok := ctx.Value(roleCtxKey("role")).(RoleResponse)
+	if !ok {
+		api.RespondError(ctx, w, errors.New("role not found", http.StatusNotFound))
+		return
+	}
+
+	api.Respond(ctx, w, role, http.StatusCreated)
 }
 
 func (r *Roles) UpdateRole(w http.ResponseWriter, req *http.Request) {
@@ -130,4 +147,23 @@ func (r *Roles) UnassignRole(w http.ResponseWriter, req *http.Request) {
 	}
 
 	api.Respond(ctx, w, nil, http.StatusOK)
+}
+
+func (r *Roles) RoleContext(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		roleIDStr := chi.URLParam(req, "roleID")
+		roleID, err := strconv.Atoi(roleIDStr)
+		if err != nil {
+			api.RespondError(ctx, w, errors.New("roleID must be a number", http.StatusBadRequest))
+			return
+		}
+		role, err := r.rolesService.GetRole(ctx, int64(roleID))
+		if err != nil {
+			api.RespondError(ctx, w, err)
+			return
+		}
+		ctx = context.WithValue(req.Context(), roleCtxKey("role"), ConvertRoleFromDBModel(role))
+		next.ServeHTTP(w, req.WithContext(ctx))
+	})
 }

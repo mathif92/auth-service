@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/mathif92/auth-service/internal/errors"
+	"github.com/mathif92/auth-service/internal/services"
 )
 
 type HealthResponse struct {
@@ -137,4 +139,45 @@ type AuthenticationResponse struct {
 
 type ResourceCreatedResponse struct {
 	ID int64 `json:"id"`
+}
+
+type RoleResponse struct {
+	ID        int64            `json:"id"`
+	Name      string           `json:"name"`
+	Enabled   bool             `json:"enabled"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
+	Actions   []ActionResponse `json:"actions"`
+}
+
+type ActionResponse struct {
+	ID        int64     `json:"id"`
+	Action    string    `json:"action"`
+	Entity    string    `json:"entity"`
+	Enabled   bool      `json:"enabled"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func ConvertRoleFromDBModel(role services.RoleWithActions) RoleResponse {
+	var actions []ActionResponse
+	for _, action := range role.Actions {
+		actions = append(actions, ActionResponse{
+			ID:        action.ID,
+			Action:    action.Action,
+			Entity:    action.Entity,
+			Enabled:   action.Enabled,
+			CreatedAt: action.CreatedAt,
+			UpdatedAt: action.UpdatedAt,
+		})
+	}
+
+	return RoleResponse{
+		ID:        role.Role.ID,
+		Name:      role.Role.Name,
+		Enabled:   role.Role.Enabled,
+		CreatedAt: role.Role.CreatedAt,
+		UpdatedAt: role.Role.UpdatedAt,
+		Actions:   actions,
+	}
 }
