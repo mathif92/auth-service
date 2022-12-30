@@ -68,6 +68,7 @@ func main() {
 			r.Patch("/", rolesHandlers.UpdateRole)
 			r.Delete("/", rolesHandlers.DeleteRole)
 			r.Post("/actions", rolesHandlers.AddActionToRole)
+			r.Delete("/actions", rolesHandlers.RemoveActionFromRole)
 		})
 	})
 

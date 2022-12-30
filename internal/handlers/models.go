@@ -100,15 +100,10 @@ func (a *UpdateActionInput) Bind(r *http.Request) error {
 }
 
 type RoleActionInput struct {
-	RoleID   int64 `json:"role_id"`
 	ActionID int64 `json:"action_id"`
 }
 
 func (r *RoleActionInput) Bind(req *http.Request) error {
-	if r.RoleID <= 0 {
-		return errors.New("role_id must be provided", http.StatusBadRequest)
-	}
-
 	if r.ActionID <= 0 {
 		return errors.New("action_id must be provided", http.StatusBadRequest)
 	}

@@ -75,6 +75,12 @@ func (r *Roles) DeleteRole(w http.ResponseWriter, req *http.Request) {
 
 func (r *Roles) AddActionToRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	role, ok := ctx.Value(roleCtxKey("role")).(RoleResponse)
+	if !ok {
+		api.RespondError(ctx, w, errors.New("role not found", http.StatusBadRequest))
+		return
+	}
+
 	var roleAction RoleActionInput
 	if err := render.Bind(req, &roleAction); err != nil {
 		api.RespondError(ctx, w, err)
@@ -82,7 +88,7 @@ func (r *Roles) AddActionToRole(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := r.rolesService.AddActionToRole(ctx, services.RolesActionsModel{
-		RoleID:   roleAction.RoleID,
+		RoleID:   role.ID,
 		ActionID: roleAction.ActionID,
 	}); err != nil {
 		api.RespondError(ctx, w, err)
@@ -94,6 +100,12 @@ func (r *Roles) AddActionToRole(w http.ResponseWriter, req *http.Request) {
 
 func (r *Roles) RemoveActionFromRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	role, ok := ctx.Value(roleCtxKey("role")).(RoleResponse)
+	if !ok {
+		api.RespondError(ctx, w, errors.New("role not found", http.StatusBadRequest))
+		return
+	}
+
 	var roleAction RoleActionInput
 	if err := render.Bind(req, &roleAction); err != nil {
 		api.RespondError(ctx, w, err)
@@ -101,7 +113,7 @@ func (r *Roles) RemoveActionFromRole(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := r.rolesService.RemoveActionFromRole(ctx, services.RolesActionsModel{
-		RoleID:   roleAction.RoleID,
+		RoleID:   role.ID,
 		ActionID: roleAction.ActionID,
 	}); err != nil {
 		api.RespondError(ctx, w, err)
