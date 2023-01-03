@@ -3,6 +3,7 @@ module github.com/mathif92/auth-service
 go 1.17
 
 require (
+	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/render v1.0.2
 	github.com/go-sql-driver/mysql v1.6.0

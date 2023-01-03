@@ -52,18 +52,24 @@ func (r *Roles) GetRole(w http.ResponseWriter, req *http.Request) {
 
 func (r *Roles) UpdateRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	var role UpdateRoleInput
-	if err := render.Bind(req, &role); err != nil {
+	role, ok := ctx.Value(roleCtxKey("role")).(RoleResponse)
+	if !ok {
+		api.RespondError(ctx, w, errors.New("role not found", http.StatusNotFound))
+		return
+	}
+
+	var roleInput UpdateRoleInput
+	if err := render.Bind(req, &roleInput); err != nil {
 		api.RespondError(ctx, w, err)
 		return
 	}
 
-	if err := r.rolesService.UpdateRole(ctx, services.RoleModel{Name: role.Name}, role.Enabled); err != nil {
+	if err := r.rolesService.UpdateRole(ctx, services.RoleModel{ID: role.ID, Name: roleInput.Name}, roleInput.Enabled); err != nil {
 		api.RespondError(ctx, w, err)
 		return
 	}
 
-	api.Respond(ctx, w, nil, http.StatusCreated)
+	api.Respond(ctx, w, nil, http.StatusOK)
 }
 
 func (r *Roles) DeleteRole(w http.ResponseWriter, req *http.Request) {
@@ -125,6 +131,12 @@ func (r *Roles) RemoveActionFromRole(w http.ResponseWriter, req *http.Request) {
 
 func (r *Roles) AssignRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	role, ok := ctx.Value(roleCtxKey("role")).(RoleResponse)
+	if !ok {
+		api.RespondError(ctx, w, errors.New("role not found", http.StatusBadRequest))
+		return
+	}
+
 	var roleCreds RoleCredentialsInput
 	if err := render.Bind(req, &roleCreds); err != nil {
 		api.RespondError(ctx, w, err)
@@ -132,7 +144,7 @@ func (r *Roles) AssignRole(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := r.rolesService.AddRoleToCredentials(ctx, services.RolesCredentialsModel{
-		RoleID:        roleCreds.RoleID,
+		RoleID:        role.ID,
 		CredentialsID: roleCreds.CredentialsID,
 	}); err != nil {
 		api.RespondError(ctx, w, err)
@@ -144,6 +156,12 @@ func (r *Roles) AssignRole(w http.ResponseWriter, req *http.Request) {
 
 func (r *Roles) UnassignRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	role, ok := ctx.Value(roleCtxKey("role")).(RoleResponse)
+	if !ok {
+		api.RespondError(ctx, w, errors.New("role not found", http.StatusBadRequest))
+		return
+	}
+
 	var roleCreds RoleCredentialsInput
 	if err := render.Bind(req, &roleCreds); err != nil {
 		api.RespondError(ctx, w, err)
@@ -151,7 +169,7 @@ func (r *Roles) UnassignRole(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := r.rolesService.UnassignRole(ctx, services.RolesCredentialsModel{
-		RoleID:        roleCreds.RoleID,
+		RoleID:        role.ID,
 		CredentialsID: roleCreds.CredentialsID,
 	}); err != nil {
 		api.RespondError(ctx, w, err)

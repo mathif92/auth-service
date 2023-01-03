@@ -43,20 +43,12 @@ func (r *CreateRoleInput) Bind(req *http.Request) error {
 }
 
 type UpdateRoleInput struct {
-	ID      int64  `json:"id"`
 	Name    string `json:"name"`
 	Enabled *bool  `json:"enabled,omitempty"`
 }
 
 func (r *UpdateRoleInput) Bind(req *http.Request) error {
-	if r.ID <= 0 {
-		return errors.New("id must be provided", http.StatusBadRequest)
-	}
-
-	if r.Name == "" {
-		return errors.New("name must be provided", http.StatusBadRequest)
-	}
-
+	// Since it's used in a patch endpoint, no fields are required
 	return nil
 }
 
@@ -78,24 +70,13 @@ func (a *CreateActionInput) Bind(r *http.Request) error {
 }
 
 type UpdateActionInput struct {
-	ID      int64  `json:"id"`
 	Action  string `json:"action"`
 	Entity  string `json:"entity"`
 	Enabled *bool  `json:"enabled,omitempty"`
 }
 
 func (a *UpdateActionInput) Bind(r *http.Request) error {
-	if a.ID <= 0 {
-		return errors.New("id must be provided", http.StatusBadRequest)
-	}
-	if a.Action == "" {
-		return errors.New("action must be provided", http.StatusBadRequest)
-	}
-
-	if a.Entity == "" {
-		return errors.New("entity must be provided", http.StatusBadRequest)
-	}
-
+	// Since it's used in a patch endpoint, no fields are required
 	return nil
 }
 
@@ -112,15 +93,10 @@ func (r *RoleActionInput) Bind(req *http.Request) error {
 }
 
 type RoleCredentialsInput struct {
-	RoleID        int64 `json:"role_id"`
 	CredentialsID int64 `json:"credentials_id"`
 }
 
 func (r *RoleCredentialsInput) Bind(req *http.Request) error {
-	if r.RoleID <= 0 {
-		return errors.New("role_id must be provided", http.StatusBadRequest)
-	}
-
 	if r.CredentialsID <= 0 {
 		return errors.New("credentials_id must be provided", http.StatusBadRequest)
 	}
@@ -174,5 +150,16 @@ func ConvertRoleFromDBModel(role services.RoleWithActions) RoleResponse {
 		CreatedAt: role.Role.CreatedAt,
 		UpdatedAt: role.Role.UpdatedAt,
 		Actions:   actions,
+	}
+}
+
+func ConvertActionFromDBModel(action services.ActionModel) ActionResponse {
+	return ActionResponse{
+		ID:        action.ID,
+		Action:    action.Action,
+		Entity:    action.Entity,
+		Enabled:   action.Enabled,
+		CreatedAt: action.CreatedAt,
+		UpdatedAt: action.UpdatedAt,
 	}
 }

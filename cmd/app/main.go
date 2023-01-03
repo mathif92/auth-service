@@ -93,6 +93,9 @@ func main() {
 
 		// Subrouter
 		r.Route("/{actionID}", func(r chi.Router) {
+			r.Use(actionsHandlers.ActionContext)
+
+			r.Get("/", actionsHandlers.GetAction)
 			r.Patch("/", actionsHandlers.UpdateAction)
 		})
 	})

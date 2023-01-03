@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/mathif92/auth-service/internal/db"
 	"github.com/pkg/errors"
+
+	"github.com/doug-martin/goqu/v9"
+	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
 )
 
 const (
@@ -122,9 +124,18 @@ func (r *Roles) UpdateRole(ctx context.Context, role RoleModel, enabledFlag *boo
 		queryArgs["enabled"] = *enabledFlag
 	}
 
-	queryArgs["updated_at"] = "current_timestamp()"
+	queryArgs["updated_at"] = goqu.L("current_timestamp()")
 
-	if err := db.Update(ctx, tx, "role", queryArgs, map[string]interface{}{"id": role.ID}); err != nil {
+	dialect := goqu.Dialect("mysql")
+	updateQuery, _, err := dialect.Update("role").Set(
+		goqu.Record(queryArgs),
+	).Where(goqu.Ex{"id": goqu.Op{"eq": role.ID}}).ToSQL()
+
+	if err != nil {
+		return errors.Wrap(err, "creating update role db query")
+	}
+
+	if _, err := tx.ExecContext(ctx, updateQuery); err != nil {
 		tx.Rollback()
 		return errors.Wrap(err, "updating role in db")
 	}
