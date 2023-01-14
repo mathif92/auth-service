@@ -131,9 +131,9 @@ func (r *Roles) RemoveActionFromRole(w http.ResponseWriter, req *http.Request) {
 
 func (r *Roles) AssignRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	role, ok := ctx.Value(roleCtxKey("role")).(RoleResponse)
+	credentials, ok := ctx.Value(credentialsCtxKey("credentials")).(CredentialsResponse)
 	if !ok {
-		api.RespondError(ctx, w, errors.New("role not found", http.StatusBadRequest))
+		api.RespondError(ctx, w, errors.New("credentials not found", http.StatusBadRequest))
 		return
 	}
 
@@ -144,8 +144,8 @@ func (r *Roles) AssignRole(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := r.rolesService.AddRoleToCredentials(ctx, services.RolesCredentialsModel{
-		RoleID:        role.ID,
-		CredentialsID: roleCreds.CredentialsID,
+		RoleID:        roleCreds.RoleID,
+		CredentialsID: credentials.ID,
 	}); err != nil {
 		api.RespondError(ctx, w, err)
 		return
@@ -156,9 +156,9 @@ func (r *Roles) AssignRole(w http.ResponseWriter, req *http.Request) {
 
 func (r *Roles) UnassignRole(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	role, ok := ctx.Value(roleCtxKey("role")).(RoleResponse)
+	credentials, ok := ctx.Value(credentialsCtxKey("credentials")).(CredentialsResponse)
 	if !ok {
-		api.RespondError(ctx, w, errors.New("role not found", http.StatusBadRequest))
+		api.RespondError(ctx, w, errors.New("credentials not found", http.StatusBadRequest))
 		return
 	}
 
@@ -169,8 +169,8 @@ func (r *Roles) UnassignRole(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := r.rolesService.UnassignRole(ctx, services.RolesCredentialsModel{
-		RoleID:        role.ID,
-		CredentialsID: roleCreds.CredentialsID,
+		RoleID:        roleCreds.RoleID,
+		CredentialsID: credentials.ID,
 	}); err != nil {
 		api.RespondError(ctx, w, err)
 		return

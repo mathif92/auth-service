@@ -18,6 +18,14 @@ type CredentialsInput struct {
 	Password string `json:"password"`
 }
 
+type CredentialsResponse struct {
+	ID        int64     `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 func (c *CredentialsInput) Bind(r *http.Request) error {
 	if c.Username == "" && c.Email == "" {
 		return errors.New("username or email must be provided", http.StatusBadRequest)
@@ -93,12 +101,12 @@ func (r *RoleActionInput) Bind(req *http.Request) error {
 }
 
 type RoleCredentialsInput struct {
-	CredentialsID int64 `json:"credentials_id"`
+	RoleID int64 `json:"role_id"`
 }
 
 func (r *RoleCredentialsInput) Bind(req *http.Request) error {
-	if r.CredentialsID <= 0 {
-		return errors.New("credentials_id must be provided", http.StatusBadRequest)
+	if r.RoleID <= 0 {
+		return errors.New("role_id must be provided", http.StatusBadRequest)
 	}
 
 	return nil
@@ -161,5 +169,15 @@ func ConvertActionFromDBModel(action services.ActionModel) ActionResponse {
 		Enabled:   action.Enabled,
 		CreatedAt: action.CreatedAt,
 		UpdatedAt: action.UpdatedAt,
+	}
+}
+
+func ConvertCredentialsFromDBModel(credentials services.CredentialsModel) CredentialsResponse {
+	return CredentialsResponse{
+		ID:        credentials.ID,
+		Username:  credentials.Username,
+		Email:     credentials.Email,
+		Password:  credentials.Password,
+		CreatedAt: credentials.CreatedAt,
 	}
 }

@@ -32,8 +32,8 @@ func main() {
 	}
 
 	tokenService := services.NewToken(cfg.SecretKey)
-	authService := services.NewAuthentication(db, tokenService)
-	authHandler := handlers.NewAuthenticationHandler(authService)
+	authService := services.NewCredentials(db, tokenService)
+	credentialsHandler := handlers.NewCredentialsHandler(authService)
 
 	rolesService := services.NewRoles(db)
 	rolesHandlers := handlers.NewRoles(rolesService)
@@ -52,7 +52,7 @@ func main() {
 	router.Get("/health", health.Health)
 
 	// Auth router
-	router.Post("/auth", authHandler.ValidateCredentials)
+	router.Post("/auth", credentialsHandler.ValidateCredentials)
 
 	// Roles router
 	router.Route("/roles", func(r chi.Router) {
@@ -74,11 +74,12 @@ func main() {
 
 	// Credentials router
 	router.Route("/credentials", func(r chi.Router) {
-		r.Post("/", authHandler.CreateCredentials)
+		r.Post("/", credentialsHandler.CreateCredentials)
 
 		// Subrouter
 		r.Route("/{credentialsID}", func(r chi.Router) {
 			r.Use(tokenService.VerifyToken)
+			r.Use(credentialsHandler.CredentialsContext)
 
 			r.Post("/roles", rolesHandlers.AssignRole)
 			r.Delete("/roles", rolesHandlers.UnassignRole)
