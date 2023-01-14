@@ -32,8 +32,14 @@ func main() {
 	}
 
 	tokenService := services.NewToken(cfg.SecretKey)
-	authService := services.NewAuthentication(db, tokenService)
-	authHandler := handlers.NewAuthenticationHandler(authService)
+	authService := services.NewCredentials(db, tokenService)
+	credentialsHandler := handlers.NewCredentialsHandler(authService)
+
+	rolesService := services.NewRoles(db)
+	rolesHandlers := handlers.NewRoles(rolesService)
+
+	actionsService := services.NewActions(db)
+	actionsHandlers := handlers.NewActions(actionsService)
 
 	router := chi.NewRouter()
 
@@ -43,9 +49,57 @@ func main() {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 
-	router.Get("/ping", health.Ping)
-	router.Post("/credentials", authHandler.CreateCredentials)
-	router.Post("/auth", authHandler.ValidateCredentials)
+	router.Get("/health", health.Health)
+
+	// Auth router
+	router.Post("/auth", credentialsHandler.ValidateCredentials)
+
+	// Roles router
+	router.Route("/roles", func(r chi.Router) {
+		r.Use(tokenService.VerifyToken)
+
+		r.Post("/", rolesHandlers.CreateRole)
+
+		// Subrouter
+		r.Route("/{roleID}", func(r chi.Router) {
+			r.Use(rolesHandlers.RoleContext)
+
+			r.Get("/", rolesHandlers.GetRole)
+			r.Patch("/", rolesHandlers.UpdateRole)
+			r.Delete("/", rolesHandlers.DeleteRole)
+			r.Post("/actions", rolesHandlers.AddActionToRole)
+			r.Delete("/actions", rolesHandlers.RemoveActionFromRole)
+		})
+	})
+
+	// Credentials router
+	router.Route("/credentials", func(r chi.Router) {
+		r.Post("/", credentialsHandler.CreateCredentials)
+
+		// Subrouter
+		r.Route("/{credentialsID}", func(r chi.Router) {
+			r.Use(tokenService.VerifyToken)
+			r.Use(credentialsHandler.CredentialsContext)
+
+			r.Post("/roles", rolesHandlers.AssignRole)
+			r.Delete("/roles", rolesHandlers.UnassignRole)
+		})
+	})
+
+	// Actions router
+	router.Route("/actions", func(r chi.Router) {
+		r.Use(tokenService.VerifyToken)
+
+		r.Post("/", actionsHandlers.CreateAction)
+
+		// Subrouter
+		r.Route("/{actionID}", func(r chi.Router) {
+			r.Use(actionsHandlers.ActionContext)
+
+			r.Get("/", actionsHandlers.GetAction)
+			r.Patch("/", actionsHandlers.UpdateAction)
+		})
+	})
 
 	http.ListenAndServe(":8080", router)
 }

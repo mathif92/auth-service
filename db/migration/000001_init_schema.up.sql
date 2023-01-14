@@ -9,7 +9,7 @@ CREATE TABLE `credentials` (
 CREATE TABLE `token` (
     `id` bigint PRIMARY KEY AUTO_INCREMENT,
 	`credentials_id` bigint NOT NULL,
-	`token` varchar(256) NULL,
+	`token` varchar(512) NULL,
 	`created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -13,25 +13,30 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Authentication struct {
+const (
+	_insertCredentials = `INSERT INTO credentials (username, password, email) 
+								VALUES (?, ?, ?)`
+
+	_selectToken = `SELECT id FROM token WHERE credentials_id = ?`
+
+	_selectCredentials = `SELECT c.* FROM credentials as c WHERE c.id = ?`
+)
+
+type Credentials struct {
 	db           *sqlx.DB
 	tokenService *Token
 }
 
-func NewAuthentication(db *sqlx.DB, tokenService *Token) *Authentication {
-	return &Authentication{db: db, tokenService: tokenService}
+func NewCredentials(db *sqlx.DB, tokenService *Token) *Credentials {
+	return &Credentials{db: db, tokenService: tokenService}
 }
 
 // SaveCredentials saves the credentials provided in the credentials parameter into the database, returns an error in case there's one
-func (a *Authentication) SaveCredentials(ctx context.Context, credentials CredentialsModel) error {
-	tx, err := a.db.BeginTxx(ctx, nil)
+func (c *Credentials) SaveCredentials(ctx context.Context, credentials CredentialsModel) error {
+	tx, err := c.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(err, "creating db transacion")
 	}
-	const (
-		_insertCredentials = `INSERT INTO credentials (username, password, email) 
-								VALUES (?, ?, ?)`
-	)
 	credentials.Password = hashAndSalt([]byte(credentials.Password))
 
 	_, err = tx.ExecContext(ctx, _insertCredentials, credentials.Username, credentials.Password, credentials.Email)
@@ -48,7 +53,7 @@ func (a *Authentication) SaveCredentials(ctx context.Context, credentials Creden
 }
 
 // Authenticate returns a valid access_token for the provided credentials or an error instead
-func (a *Authentication) Authenticate(ctx context.Context, credentials CredentialsModel) (string, error) {
+func (c *Credentials) Authenticate(ctx context.Context, credentials CredentialsModel) (string, error) {
 	query := `SELECT * FROM credentials WHERE email = ?`
 	args := []interface{}{credentials.Email}
 	if credentials.Username != "" {
@@ -57,7 +62,7 @@ func (a *Authentication) Authenticate(ctx context.Context, credentials Credentia
 	}
 
 	var storedCredentials CredentialsModel
-	if err := a.db.GetContext(ctx, &storedCredentials, query, args...); err != nil {
+	if err := c.db.GetContext(ctx, &storedCredentials, query, args...); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", errs.New("invalid credentials", http.StatusUnauthorized)
 		}
@@ -68,21 +73,18 @@ func (a *Authentication) Authenticate(ctx context.Context, credentials Credentia
 		return "", errs.New("invalid credentials", http.StatusUnauthorized)
 	}
 
-	tx, err := a.db.BeginTxx(ctx, nil)
+	tx, err := c.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return "", errors.Wrap(err, "creating db transaction")
 	}
 
-	token, err := a.tokenService.GenerateToken()
+	token, err := c.tokenService.GenerateToken(credentials.Username, credentials.Email)
 	if err != nil {
 		return "", errors.Wrap(err, "generating token")
 	}
 
-	const (
-		_selectToken = `SELECT id FROM token WHERE credentials_id = ?`
-	)
 	var tokenID int64
-	if err := a.db.GetContext(ctx, &tokenID, _selectToken, storedCredentials.ID); err != nil {
+	if err := c.db.GetContext(ctx, &tokenID, _selectToken, storedCredentials.ID); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return "", errors.Wrap(err, "retrieving token from db")
 		}
@@ -112,6 +114,18 @@ func (a *Authentication) Authenticate(ctx context.Context, credentials Credentia
 	}
 
 	return token, nil
+}
+
+func (c *Credentials) GetCredentials(ctx context.Context, credentialsID int64) (CredentialsModel, error) {
+	var credentials CredentialsModel
+	if err := c.db.GetContext(ctx, &credentials, _selectCredentials, credentialsID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return CredentialsModel{}, errs.New("credentials not found", http.StatusNotFound)
+		}
+		return CredentialsModel{}, errors.Wrap(err, "retrieving credentials from DB")
+	}
+
+	return credentials, nil
 }
 
 func hashAndSalt(pwd []byte) string {

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -18,12 +19,17 @@ func NewToken(secretKey string) *Token {
 	return &Token{secretKey: secretKey}
 }
 
-func (t *Token) GenerateToken() (string, error) {
+func (t *Token) GenerateToken(username string, email string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS512)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["exp"] = time.Now().Add(10 * time.Minute)
+
+	// The "iat" claims field needs to be slightly less than now in order to make the verification work
+	claims["iat"] = time.Now().Add(-(time.Second * 2)).Unix()
+
+	claims["exp"] = time.Now().Add(10 * time.Minute).Unix()
 	claims["authorized"] = true
-	claims["user"] = "username"
+	claims["username"] = username
+	claims["email"] = email
 
 	tokenString, err := token.SignedString([]byte(t.secretKey))
 	if err != nil {
@@ -33,7 +39,7 @@ func (t *Token) GenerateToken() (string, error) {
 	return tokenString, nil
 }
 
-func (t *Token) VerifyToken(endpointHandler func(writer http.ResponseWriter, request *http.Request)) http.HandlerFunc {
+func (t *Token) VerifyToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		ctx := request.Context()
 		if request.Header["Authorization"] != nil {
@@ -43,18 +49,11 @@ func (t *Token) VerifyToken(endpointHandler func(writer http.ResponseWriter, req
 			}
 
 			jwtToken, err := jwt.Parse(providedToken, func(token *jwt.Token) (interface{}, error) {
-				_, ok := token.Method.(*jwt.SigningMethodECDSA)
-				if !ok {
-					if err := api.RespondError(ctx, writer, errors.New("Unauthorized", http.StatusUnauthorized)); err != nil {
-						return nil, err
-
-					}
-				}
-				return "", nil
-
+				return []byte(t.secretKey), nil
 			})
 
 			if err != nil {
+				fmt.Printf("Error parsing JWT: %e\n", err)
 				if err := api.RespondError(ctx, writer, errors.New("Unauthorized: error parsing the JWT", http.StatusUnauthorized)); err != nil {
 					return
 				}
@@ -67,7 +66,7 @@ func (t *Token) VerifyToken(endpointHandler func(writer http.ResponseWriter, req
 						return
 					}
 				}
-				endpointHandler(writer, request)
+				next.ServeHTTP(writer, request)
 			} else {
 				if err := api.RespondError(ctx, writer, errors.New("Invalid token", http.StatusUnauthorized)); err != nil {
 					return
