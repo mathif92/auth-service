@@ -34,6 +34,21 @@ up:
 	@echo "=> Running auth-service"
 	@go run cmd/app/main.go
 
+k8s-up:
+	@echo "=> Running auth-service in local Minikube k8s cluster"
+	@kubectl apply -f deploy/k8s/local/config.yaml
+	@kubectl apply -f deploy/k8s/local/service.yaml
+	@kubectl apply -f deploy/k8s/local/mysql-service.yaml
+	@kubectl create configmap proxysql-configmap --from-file=deploy/k8s/local/proxysql.cnf
+	@kubectl apply -f deploy/k8s/base/deployment.yaml
+
+k8s-clean:
+	@kubectl delete -f deploy/k8s/base/deployment.yaml
+	@kubectl delete -f deploy/k8s/local/service.yaml
+	@kubectl delete -f deploy/k8s/local/mysql-service.yaml
+	@kubectl delete -f deploy/k8s/local/config.yaml
+	@kubectl delete configmap proxysql-configmap
+
 
 # Administration
 

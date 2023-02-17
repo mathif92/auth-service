@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: mathif925/auth-service
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        env:
+        - name: CONFIG_FILE_PATH
+          value: /config/config.yaml
+        ports:
+        - containerPort: 8080
+        ###### Mount the config map
+        volumeMounts:
+          - name: mnt
+            mountPath: /config/config.yaml
+            subPath: config.yaml
+      - image: severalnines/proxysql
+        name: proxysql
+        volumeMounts:
+        - name: proxysql-config
+          mountPath: /etc/proxysql.cnf
+          subPath: proxysql.cnf
+        - name: shared-data
+          mountPath: /tmp
+      volumes:
+      - name: mnt
+        configMap:
+          name: auth-service-config
+      - name: proxysql-config
+        configMap:
+          name: proxysql-configmap
+      - name: shared-data
+        emptyDir: {}

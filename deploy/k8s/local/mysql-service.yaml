@@ -1,0 +1,7 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: mysql-db-svc
+spec: 
+  type: ExternalName
+  externalName: 10.0.2.2
