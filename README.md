@@ -8,6 +8,5 @@ For running the app locally it's needed to execute:
 ```
 make db-up
 make migrate-up
-make k8s-up
-kubectl port-forward deployment/auth-service --pod-running-timeout=1m0s 8080:8080
+go run ./cmd/app
 ```
