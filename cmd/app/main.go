@@ -22,8 +22,6 @@ func main() {
 	zapLogger := logger.NewZapLogger(zap.InfoLevel)
 	defer zapLogger.Sync()
 
-	health := handlers.NewHealth()
-
 	cfg := NewConfig(zapLogger)
 	db, err := OpenDB(cfg.DB)
 	if err != nil {
@@ -31,13 +29,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Create the health handler
+	health := handlers.NewHealth(db)
+
+	// Create the auth services for the app
 	tokenService := services.NewToken(cfg.SecretKey)
 	authService := services.NewCredentials(db, tokenService)
 	credentialsHandler := handlers.NewCredentialsHandler(authService)
 
+	// Create the role services for the app
 	rolesService := services.NewRoles(db)
 	rolesHandlers := handlers.NewRoles(rolesService)
 
+	// Create the actions service for the app
 	actionsService := services.NewActions(db)
 	actionsHandlers := handlers.NewActions(actionsService)
 
@@ -49,6 +53,7 @@ func main() {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 
+	// Health router
 	router.Get("/health", health.Health)
 
 	// Auth router

@@ -1,0 +1,10 @@
+# Use the golang:1.17 image as a base image
+FROM golang:1.17
+
+ENV GOBIN=/usr/local/go/bin
+
+# Install the migrate tool
+RUN go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+# Add the directory where 'migrate' is installed to the PATH
+ENV PATH="${PATH}:/usr/local/go/bin"

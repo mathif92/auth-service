@@ -14,9 +14,12 @@ fmt:
 # ==============================================================================
 # Running tests within the local computer
 
-test: up
+test:
 	@echo "=> Executing go test"
-	@go test -v ./... -covermode=atomic -coverprofile=coverage.out -coverpkg=./... -count=1  -race -timeout=30m
+	@docker run -d --name mysql_test_db -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=auth -e MYSQL_USER=auth -e MYSQL_PASSWORD=auth -e MYSQL_HOST=% -p 3310:3306 mysql/mysql-server:8.0
+	@sh run_tests.sh
+	@docker stop mysql_test_db
+	@docker rm mysql_test_db
 
 coverage: test
 	@echo "=> Running coverage report"
@@ -51,12 +54,11 @@ k8s-clean:
 
 
 # Administration
-
 init-db:
 	@migrate create -ext sql -dir db/migration -seq init_schema
 
-migrate name=1:
-	@migrate create -ext sql -dir db/migration -seq $(name)
+# migrate name=1:
+# 	@migrate create -ext sql -dir db/migration -seq $(name)
 
 migrateup:
 	@migrate -path db/migration -database "mysql://auth:auth@tcp(localhost:3306)/auth?tls=false" -verbose up
